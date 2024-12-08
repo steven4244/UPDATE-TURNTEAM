@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Logo and Header -->
+    <div class="text-center mb-3">
+        <img src="{{ url_for('static', filename='images/FullLogo_NoBuffer.jpg') }}" alt="Turn Tracker Logo" style="max-width: 150px; height: auto;">
+    </div>
+    <h1 class="text-center">Turn Management System</h1>
+    <h3 class="text-center">{{ unit }}</h3>
+    <p class="text-center">{{ shift }} - {{ date }}</p>
+
+    <!-- Navigation and Filters -->
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap">
+        <!-- Back to Home Button -->
+        <div class="me-3 mb-2">
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Back to Home</a>
+        </div>
+
+        <!-- Print Button -->
+        <div class="me-3 mb-2">
+            <button class="btn btn-info" onclick="openPrintPage('{{ unit }}', '{{ shift }}', '{{ date }}')">Print Turn Page</button>
+        </div>
+
+        <!-- Shift Selector -->
+        <form method="get" class="d-flex align-items-center me-3 mb-2">
+            <input type="hidden" name="unit" value="{{ unit }}">
+            <label for="shift" class="me-2">Shift:</label>
+            <select name="shift" id="shift" class="form-select me-2" onchange="this.form.submit()">
+                <option value="Days" {% if shift == 'Days' %}selected{% endif %}>Days</option>
+                <option value="Nights" {% if shift == 'Nights' %}selected{% endif %}>Nights</option>
+            </select>
+        </form>
+
+        <!-- Date Selector -->
+        <form method="get" class="d-flex align-items-center me-3 mb-2">
+            <input type="hidden" name="unit" value="{{ unit }}">
+            <input type="hidden" name="shift" value="{{ shift }}">
+            <label for="date" class="me-2">Date:</label>
+            <input type="date" name="date" id="date" value="{{ date }}" class="form-control me-2" onchange="this.form.submit()" required>
+        </form>
+
+        <!-- Add Room Form -->
+        <form action="{{ url_for('add_room') }}" method="post" class="d-flex align-items-center mb-2">
+            <input type="hidden" name="unit" value="{{ unit }}">
+            <input type="hidden" name="shift" value="{{ shift }}">
+            <input type="hidden" name="date" value="{{ date }}">
+            <select id="room-select" name="room" class="form-select me-2" required>
+                <option value="" disabled selected>Type or select a room...</option>
+                {% for room in inactive_rooms %}
+                    <option value="{{ room }}">{{ room.split(' ')[0] }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-success">Add Room</button>
+        </form>
+    </div>
+
+    <!-- Main Form -->
+    <form action="{{ url_for('save_turn_data') }}" method="post">
+        <input type="hidden" name="unit" value="{{ unit }}">
+        <input type="hidden" name="shift" value="{{ shift }}">
+        <input type="hidden" name="date" value="{{ date }}">
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover text-center">
+                <thead>
+                    <tr>
+                        <th>Actions</th>
+                        <th>Room</th>
+                        {% for hour in hours %}
+                        <th>{{ hour.split(' ')[1] }} {{ hour.split(' ')[2] }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for room in rooms %}
+                    <tr id="room-row-{{ room }}">
+                        <td>
+                            <button 
+                                type="button" 
+                                class="btn btn-danger delete-room-btn" 
+                                data-room="{{ room }}" 
+                                data-unit="{{ unit }}">
+                                X
+                            </button>
+                        </td>
+                        <td>{{ room }}</td>
+                        {% for hour in hours %}
+                        <td>
+                            <select name="turn_status_{{ room }}_{{ hour }}" class="form-select select2">
+                                <option value="" {% if room_data[room][hour]['turn_status'] == "" %}selected{% endif %}>--</option>
+                                {% for option in TURN_OPTIONS %}
+                                <option value="{{ option }}" {% if room_data[room][hour]['turn_status'] == option %}selected{% endif %}>
+                                    {{ option }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan="2" class="table-info">Enter Co-Workers:</td>
+                        {% for hour in hours %}
+                        <td>
+                            <input type="text" name="name1_{{ hour }}" placeholder="Name #1" value="{{ names[hour]['name1'] }}" class="form-control mb-2">
+                            <input type="text" name="name2_{{ hour }}" placeholder="Name #2" value="{{ names[hour]['name2'] }}" class="form-control">
+                        </td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+
+                <tfoot>
+                    <tr>
+                        <td colspan="2">Save your data!</td>
+                        {% for hour in hours %}
+                        <td>
+                            <button type="submit" class="btn btn-primary w-100" name="selected_hour" value="{{ hour }}">
+                                Save
+                            </button>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </form>
+</div>
+
+<!-- JavaScript for Print and Delete Room -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log("JavaScript loaded and ready.");
+
+        // Select2-like Dropdown Initialization using Plain JavaScript
+        document.querySelectorAll('.select2').forEach(function (selectElement) {
+            // Placeholder logic for Select2 alternative
+            if (!selectElement.value) {
+                selectElement.style.color = 'gray';
+            }
+
+            selectElement.addEventListener('change', function () {
+                if (selectElement.value) {
+                    selectElement.style.color = 'black'; // Reset color on selection
+                } else {
+                    selectElement.style.color = 'gray'; // Placeholder color
+                }
+            });
+        });
+
+        // Print Page Functionality
+        function openPrintPage(unit, shift, date) {
+            const printWindow = window.open(
+                `/print_turn_page/${unit}?shift=${shift}&date=${date}`,
+                '_blank'
+            );
+            printWindow.onload = function () {
+                printWindow.print();
+                printWindow.onafterprint = function () {
+                    printWindow.close();
+                };
+            };
+        }
+
+        // Delete Room Button Event
+        document.querySelectorAll('.delete-room-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const room = this.dataset.room;
+                const unit = this.dataset.unit;
+
+                console.log(`Delete button clicked for Room: ${room}, Unit: ${unit}`);
+
+                if (confirm(`Are you sure you want to delete Room ${room}?`)) {
+                    fetch('/delete_room', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ room, unit })
+                    })
+                    .then(response => {
+                        console.log(`Response status: ${response.status}`);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Response data:', data);
+                        if (data.success) {
+                            alert(data.message);
+                            document.getElementById(`room-row-${room}`).remove();
+                        } else {
+                            alert(`Error: ${data.message}`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                        alert('An error occurred while deleting the room.');
+                    });
+                }
+            });
+        });
+
+        // Attach the print page function globally
+        window.openPrintPage = openPrintPage;
+    });
+</script>
+{% endblock %}

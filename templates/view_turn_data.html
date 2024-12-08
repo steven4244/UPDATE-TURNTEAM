@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Turn Data</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 40px;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #5bc0de;
+            color: black;
+            font-size: 1.5rem;
+            text-align: center;
+            border-radius: 12px 12px 0 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center my-4">View Turn Data</h1>
+
+        <!-- Navigation Links -->
+        <div class="d-flex justify-content-between mb-3">
+            <a href="/" class="btn btn-secondary">Back to Home</a>
+            <form method="GET" action="{{ url_for('view_turn_data_horizontal') }}">
+                <input type="hidden" name="unit" value="{{ unit }}">
+                <input type="hidden" name="room" value="{{ room }}">
+                <input type="hidden" name="start_date" value="{{ start_date }}">
+                <input type="hidden" name="end_date" value="{{ end_date }}">
+                <button class="btn btn-primary btn-sm">Switch to Horizontal View</button>
+            </form>
+            <button class="btn btn-success btn-sm" onclick="exportTableToExcel('turn-data-table')">Export Data</button>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="card mb-4">
+            <div class="card-header">Adjust Filters</div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('view_turn_data') }}">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="view-unit" class="form-label">Select Unit:</label>
+                            <select id="view-unit" name="unit" class="form-select">
+                                <option value="">All Units</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="view-room" class="form-label">Select Room:</label>
+                            <select id="view-room" name="room" class="form-select" disabled>
+                                <option value="">All Rooms</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="start-date" class="form-label">Start Date:</label>
+                            <input type="date" id="start-date" name="start_date" class="form-control" value="{{ start_date }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="end-date" class="form-label">End Date:</label>
+                            <input type="date" id="end-date" name="end_date" class="form-control" value="{{ end_date }}" required>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-end">
+                        <button type="submit" class="btn btn-info">Apply Filters</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="card">
+            <div class="card-body">
+                {% if turn_data %}
+                <div class="table-responsive">
+                    <table id="turn-data-table" class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Unit</th>
+                                <th>Room</th>
+                                <th>Hour</th>
+                                <th>Turn Status</th>
+                                <th>Name 1</th>
+                                <th>Name 2</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in turn_data %}
+                            <tr>
+                                <td>{{ entry.date }}</td>
+                                <td>{{ entry.unit }}</td>
+                                <td>{{ entry.room_number }}</td>
+                                <td>{{ entry.hour }}</td>
+                                <td>{{ entry.turn_status }}</td>
+                                <td>{{ entry.name1 }}</td>
+                                <td>{{ entry.name2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center text-muted">No data available for the selected filters.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Export to Excel Script -->
+    <script>
+        function exportTableToExcel(tableID, filename = 'Turn_Data.xlsx') {
+            const table = document.getElementById(tableID);
+            const rows = Array.from(table.rows);
+            const formattedData = rows.map(row => Array.from(row.cells).map(cell => cell.innerText.trim()));
+            const worksheet = XLSX.utils.aoa_to_sheet(formattedData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Turn Data');
+            XLSX.writeFile(workbook, filename);
+        }
+    </script>
+
+    <!-- Unit and Room Loading Script -->
+    <script>
+        async function loadUnits() {
+            const unitSelect = document.getElementById('view-unit');
+            try {
+                const response = await fetch('/api/units');
+                if (!response.ok) throw new Error('Failed to fetch units');
+                const data = await response.json();
+                const units = data.units;
+
+                unitSelect.innerHTML = '<option value="">All Units</option>';
+                units.forEach(unit => {
+                    const option = `<option value="${unit}">${unit}</option>`;
+                    unitSelect.innerHTML += option;
+                });
+
+                const selectedUnit = "{{ unit }}";
+                if (selectedUnit) {
+                    unitSelect.value = selectedUnit;
+                    loadRoomsForUnit(selectedUnit);
+                }
+            } catch (error) {
+                console.error('Error loading units:', error);
+            }
+        }
+
+        async function loadRoomsForUnit(unit) {
+            const roomSelect = document.getElementById('view-room');
+            if (!unit) {
+                roomSelect.innerHTML = '<option value="">All Rooms</option>';
+                roomSelect.disabled = true;
+                return;
+            }
+            try {
+                const response = await fetch(`/api/rooms?unit=${encodeURIComponent(unit)}`);
+                if (!response.ok) throw new Error('Failed to fetch rooms');
+                const data = await response.json();
+
+                roomSelect.innerHTML = '<option value="">All Rooms</option>';
+                const sortedRooms = data.rooms
+                    .map(room => room.replace(/\(inactive\)\s*/g, "").trim())
+                    .sort((a, b) => parseInt(a) - parseInt(b));
+
+                sortedRooms.forEach(room => {
+                    const option = `<option value="${room}">${room}</option>`;
+                    roomSelect.innerHTML += option;
+                });
+
+                roomSelect.disabled = false;
+                const selectedRoom = "{{ room }}";
+                if (selectedRoom) roomSelect.value = selectedRoom;
+            } catch (error) {
+                console.error('Error loading rooms:', error);
+            }
+        }
+
+        loadUnits();
+        document.getElementById('view-unit').addEventListener('change', function () {
+            loadRoomsForUnit(this.value);
+        });
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turn Tracker - Admin</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(to right, #00939b, #0056b3);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .home-container {
+            background: #fff;
+            color: #000;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 800px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        header img {
+            width: 100%;
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        header h1 {
+            font-size: 2.5rem;
+            color: #5a6e73;
+        }
+        .btn-primary {
+            background-color: #4169E1;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        /* Center and Style Card Headers */
+        .card-header {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #000000;
+            background-color: #d9f2f3; /* Blue background */
+            border-radius: 0.5rem 0.5rem 0 0;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="home-container">
+<header>
+    <!-- Existing Logo and Header Content -->
+    <img src="{{ url_for('static', filename='images/FullLogo_NoBuffer.jpg') }}" alt="Turn Tracker Logo">
+    <h1>Turn Tracker</h1>
+    <h2>Admin Panel</h2>
+    <p>Manage your unit's turn tracking.</p>
+    <p class="mt-2">
+        <a href="{{ url_for('logout') }}" class="text-muted">Logout</a>
+    </p>
+</header>
+        <main>
+            <!-- Manage Rooms Section -->
+            <div class="card mb-4">
+                <div class="card-header">Manage Rooms</div>
+                <div class="card-body">
+                    <form method="POST" action="/" class="form-container">
+                        <div class="form-group mb-4">
+                            <label for="unit" class="form-label">Unit:</label>
+                            <select id="unit" name="unit" class="form-select" required>
+                                <option value="" disabled selected>Select a Unit</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-4">
+                            <label for="shift" class="form-label">Shift:</label>
+                            <select id="shift" name="shift" class="form-select" required>
+                                <option value="Days">Days</option>
+                                <option value="Nights">Nights</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-4">
+                            <label for="date" class="form-label">Date:</label>
+                            <input type="date" id="date" name="date" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg w-100">Start</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- View Turn Data Section -->
+            <div class="card mb-4">
+                <div class="card-header">View Turn Data</div>
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('view_turn_data') }}">
+                        <div class="form-group mb-3">
+                            <label for="view-unit" class="form-label">Select Unit:</label>
+                            <select id="view-unit" name="unit" class="form-select">
+                                <option value="">All Units</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="view-room" class="form-label">Select Room:</label>
+                            <select id="view-room" name="room" class="form-select" disabled>
+                                <option value="">Select a Room</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="start-date" class="form-label">Start Date:</label>
+                            <input type="date" id="start-date" name="start_date" class="form-control" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="end-date" class="form-label">End Date:</label>
+                            <input type="date" id="end-date" name="end_date" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-info btn-lg w-100">View Turn Data</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Horizontal Turn Data View Section -->
+            <div class="card mb-4">
+                <div class="card-header">Horizontal Turn Data View</div>
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('view_turn_data_horizontal') }}">
+                        <div class="form-group mb-3">
+                            <label for="horizontal-unit" class="form-label">Select Unit:</label>
+                            <select id="horizontal-unit" name="unit" class="form-select">
+                                <option value="">All Units</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="horizontal-room" class="form-label">Select Room:</label>
+                            <select id="horizontal-room" name="room" class="form-select" disabled>
+                                <option value="">Select a Room</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="horizontal-start-date" class="form-label">Start Date:</label>
+                            <input type="date" id="horizontal-start-date" name="start_date" class="form-control" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="horizontal-end-date" class="form-label">End Date:</label>
+                            <input type="date" id="horizontal-end-date" name="end_date" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-warning btn-lg w-100">View Horizontal Turn Data</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Export Data Section -->
+            <div class="card mb-4">
+                <div class="card-header">Export Data</div>
+                <div class="card-body">
+                    <form id="export-form" method="GET" action="/export">
+                        <div class="form-group mb-3">
+                            <label for="export-unit" class="form-label">Select Unit:</label>
+                            <select id="export-unit" name="unit" class="form-select">
+                                <option value="">All Units</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="start-date-export" class="form-label">Start Date:</label>
+                            <input type="date" id="start-date-export" name="start_date" class="form-control">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="end-date-export" class="form-label">End Date:</label>
+                            <input type="date" id="end-date-export" name="end_date" class="form-control">
+                        </div>
+                        <button type="submit" class="btn btn-success btn-lg w-100">Export Filtered Data</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function loadUnits() {
+            const unitSelects = [
+                document.getElementById('export-unit'),
+                document.getElementById('view-unit'),
+                document.getElementById('horizontal-unit'),
+            ];
+            const manageUnitSelect = document.getElementById('unit');
+
+            try {
+                const response = await fetch('/api/units');
+                if (!response.ok) throw new Error('Failed to fetch units');
+                const data = await response.json();
+                const units = data.units;
+
+                // Populate Manage Rooms unit dropdown without "All Units"
+                manageUnitSelect.innerHTML = '<option value="" disabled selected>Select a Unit</option>';
+                units.forEach(unit => {
+                    manageUnitSelect.innerHTML += `<option value="${unit}">${unit}</option>`;
+                });
+
+                // Populate other unit dropdowns with "All Units"
+                unitSelects.forEach(select => {
+                    select.innerHTML = '<option value="">All Units</option>';
+                    units.forEach(unit => {
+                        select.innerHTML += `<option value="${unit}">${unit}</option>`;
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading units:', error);
+            }
+        }
+
+        async function loadRoomsForUnit(unit) {
+            const roomSelects = [
+                document.getElementById('view-room'),
+                document.getElementById('horizontal-room'),
+            ];
+
+            if (!unit) {
+                roomSelects.forEach(select => {
+                    select.innerHTML = '<option value="">Select a Room</option>';
+                    select.disabled = true;
+                });
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/rooms?unit=${encodeURIComponent(unit)}`);
+                if (!response.ok) throw new Error('Failed to fetch rooms');
+
+                const data = await response.json();
+                roomSelects.forEach(select => {
+                    select.innerHTML = '<option value="">Select a Room</option>'; // Blank option added
+
+                    // Sort rooms by number and remove "(inactive)"
+                    const sortedRooms = data.rooms
+                        .map(room => room.replace(/\(inactive\)\s*/g, "").trim())
+                        .sort((a, b) => parseInt(a) - parseInt(b));
+
+                    sortedRooms.forEach(room => {
+                        select.innerHTML += `<option value="${room}">${room}</option>`;
+                    });
+
+                    select.disabled = false;
+                });
+            } catch (error) {
+                console.error('Error loading rooms:', error);
+            }
+        }
+
+        document.getElementById('view-unit').addEventListener('change', function () {
+            loadRoomsForUnit(this.value);
+        });
+
+        document.getElementById('horizontal-unit').addEventListener('change', function () {
+            loadRoomsForUnit(this.value);
+        });
+
+        loadUnits();
+    </script>
+</body>
+</html>

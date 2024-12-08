@@ -1,0 +1,188 @@
+{% block content %}
+<div class="container mt-4">
+    <!-- Logo -->
+    <div class="text-center mb-3">
+        <img src="{{ url_for('static', filename='images/FullLogo_NoBuffer.jpg') }}" alt="Logo" style="max-width: 150px; height: auto;">
+    </div>
+
+    <!-- Centered Header -->
+    <div class="text-center p-3" style="margin-bottom: 20px;">
+        <h1 style="font-size: 2.8rem; font-weight: bold; margin-bottom: 5px;">{{ unit }}</h1>
+        <h2 style="font-size: 1.6rem; color: #555; margin-bottom: 0;">{{ date | datetimeformat }} - {{ shift }}</h2>
+    </div>
+
+    <!-- Go Back Button (hidden on print) -->
+    <div class="text-center mb-4 no-print">
+        <button onclick="window.location.href = '{{ url_for('manage_unit', unit=unit, shift=shift, date=date) }}';" 
+                class="btn btn-outline-primary btn-lg">
+            Go Back
+        </button>
+    </div>
+
+    <!-- Table in Card -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="table-primary text-center">
+                        <tr>
+                            <th class="text-nowrap" style="font-weight: bold; background-color: #f1f1f1;">Room</th>
+                            {% for hour in hours %}
+                            <th class="text-nowrap" style="font-weight: bold; background-color: #f1f1f1;">
+                                {{ hour.split(' ')[0] | datetimeformat }}<br>{{ hour.split(' ')[1] }} {{ hour.split(' ')[2] }}
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for room, data in room_data.items() %}
+                        <!-- Room Row -->
+                        <tr>
+                            <td class="fw-bold text-center">{{ room }}</td>
+                            {% for hour in hours %}
+                            <td class="text-center">{{ data[hour]['turn_status'] or "" }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+
+                        <!-- Names Row -->
+                        <tr class="table-light">
+                            <td class="fw-bold text-center" style="background-color: #f9f9f9;">Names</td>
+                            {% for hour in hours %}
+                            <td class="text-center" style="background-color: #f9f9f9;">
+                                <div>{{ names[hour]['name1'] or "" }}</div>
+                                <div>{{ names[hour]['name2'] or "" }}</div>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Auto-Print -->
+<script>
+    window.onload = function() {
+        window.print();
+    };
+</script>
+
+<style>
+    /* General Styling */
+    body {
+        font-size: 12px;
+        color: #333;
+        background-color: #fff;
+    }
+
+    /* Logo Styling */
+    img {
+        display: block;
+        margin: 0 auto;
+    }
+
+    /* Header Styling */
+    h1, h2 {
+        margin: 0;
+        text-align: center;
+    }
+
+    .container {
+        width: 95%;
+        margin: 0 auto;
+    }
+
+    /* Card Styling */
+    .card {
+        margin: 20px auto;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Table Styling */
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 11px;
+    }
+
+    th, td {
+        padding: 8px;
+        text-align: center;
+        border: 1px solid #ddd;
+    }
+
+    thead th {
+        background-color: #e9ecef; /* Light gray for headers */
+        font-weight: bold;
+    }
+
+    tbody tr:nth-child(even) {
+        background-color: #f8f9fa; /* Subtle alternating row color */
+    }
+
+    tbody tr:last-child td {
+        background-color: #f9f9f9; /* Highlight for the Names row */
+    }
+
+    /* Button Styling */
+    .btn-outline-primary {
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 25px;
+        border: 2px solid #007bff;
+        background: transparent;
+        color: #007bff;
+        transition: all 0.3s;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #007bff;
+        color: #fff;
+    }
+
+    /* No-Print Styling */
+    .no-print {
+        display: block;
+    }
+
+    @media print {
+        .no-print {
+            display: none;
+        }
+
+        body {
+            font-size: 10px;
+            margin: 0;
+        }
+
+        th, td {
+            padding: 4px;
+        }
+
+        .table-responsive {
+            overflow: visible !important;
+        }
+
+        .container {
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
+        /* Hide default browser headers and footers */
+        @page {
+            margin: 0.5in;
+        }
+
+        header, footer {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
